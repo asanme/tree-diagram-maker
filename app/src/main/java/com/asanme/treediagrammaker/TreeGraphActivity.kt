@@ -63,6 +63,7 @@ class TreeGraphActivity : TreeLoaderActivity() {
                 .setSiblingSeparation(100)
                 .setLevelSeparation(300)
                 .setSubtreeSeparation(300)
+
         val itemId = item.itemId
         if (itemId == R.id.topToBottom) {
             builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM)
