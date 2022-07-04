@@ -11,7 +11,7 @@
         android:theme="@style/Theme.TreeDiagramMaker">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".TreeGraphActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
