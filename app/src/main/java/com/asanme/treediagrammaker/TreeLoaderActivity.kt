@@ -2,13 +2,12 @@ package com.asanme.treediagrammaker
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -16,6 +15,9 @@ import com.google.android.material.snackbar.Snackbar
 import dev.bandb.graphview.AbstractGraphAdapter
 import dev.bandb.graphview.graph.Graph
 import dev.bandb.graphview.graph.Node
+import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration
+import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
+import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
 import java.util.*
 
 abstract class TreeLoaderActivity : AppCompatActivity() {
@@ -25,25 +27,30 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private var currentNode: Node? = null
     private var nodeCount = 1
 
-    private lateinit var filterBtnList: List<Button>
+    private lateinit var filterList: List<Button>
+    private lateinit var configList: List<FloatingActionButton>
 
     private lateinit var configBtn: FloatingActionButton
     private lateinit var editBtn: FloatingActionButton
     private lateinit var deleteBtn: FloatingActionButton
     private lateinit var addBtn: FloatingActionButton
 
-    private var clicked = false
+    private lateinit var builder : BuchheimWalkerConfiguration.Builder
+
+    private var clickedFilter = false
+    private var clickedConfig = false
 
     private lateinit var filterBtn: FloatingActionButton
 
-    private val rotateOpen: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_open_anim) }
-    private val rotateClose: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_close_anim) }
-    private val fromBottom: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.from_bottom_anim) }
-    private val toBottom: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.to_bottom_anim) }
+    private val rotateFilterOpen: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_open_anim) }
+    private val rotateFilterClose: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_close_anim) }
+    private val fromBottomFilter: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.from_bottom_anim) }
+    private val toBottomFilter: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.to_bottom_anim) }
 
-    protected abstract fun createGraph(): Graph
-    protected abstract fun setLayoutManager()
-    protected abstract fun setEdgeDecoration()
+    private val rotateSettingsOpen: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_open_anim) }
+    private val rotateSettingsClose: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.rotate_close_anim) }
+    private val fromBottomSettings: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.from_bottom_anim) }
+    private val toBottomSettings: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.to_bottom_anim) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,23 +59,21 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         filterBtn = findViewById(R.id.filterView)
         configBtn = findViewById(R.id.configNode)
 
-        editBtn = findViewById(R.id.editNode)
-        deleteBtn = findViewById(R.id.deleteNode)
-        addBtn = findViewById(R.id.createNode)
+        val editBtn = findViewById<FloatingActionButton>(R.id.editNode)
+        val deleteBtn = findViewById<FloatingActionButton>(R.id.deleteNode)
+        val addBtn = findViewById<FloatingActionButton>(R.id.createNode)
 
         var layout1Btn = findViewById<Button>(R.id.lay1)
         var layout2Btn = findViewById<Button>(R.id.lay2)
         var layout3Btn = findViewById<Button>(R.id.lay3)
         var layout4Btn = findViewById<Button>(R.id.lay4)
 
-        filterBtnList = Arrays.asList(layout1Btn, layout2Btn, layout3Btn, layout4Btn)
-
-        for(btn in filterBtnList){
-            btn.visibility = View.GONE
-            btn.setOnClickListener {
-                Log.i("DEBUG INFO:::", "SHEEEESH")
-            }
-        }
+        filterList = Arrays.asList(layout1Btn, layout2Btn, layout3Btn, layout4Btn)
+        configList = Arrays.asList(editBtn, deleteBtn, addBtn)
+        builder = BuchheimWalkerConfiguration.Builder()
+            .setSiblingSeparation(100)
+            .setLevelSeparation(300)
+            .setSubtreeSeparation(300)
 
         val graph = createGraph()
         recyclerView = findViewById(R.id.recycler)
@@ -77,91 +82,131 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         setupGraphView(graph)
         setupFab(graph)
 
+        layout1Btn.setOnClickListener {
+            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM)
+            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
+            recyclerView.adapter = adapter
+        }
+
+        layout2Btn.setOnClickListener {
+            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_BOTTOM_TOP)
+            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
+            recyclerView.adapter = adapter
+        }
+
+        layout3Btn.setOnClickListener {
+            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT)
+            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
+            recyclerView.adapter = adapter
+        }
+
+        layout4Btn.setOnClickListener {
+            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_RIGHT_LEFT)
+            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
+            recyclerView.adapter = adapter
+        }
+
+        for(btn in filterList){
+            btn.visibility = View.GONE
+        }
+
+        for(btn in configList){
+            btn.visibility = View.GONE
+        }
 
         filterBtn.setOnClickListener{
-            Log.i("EFB Info:::", "Clicked state: $clicked" )
-            onFloatingBtnClicked()
+            Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
+            onFilterClicked(filterList)
+        }
+
+        configBtn.setOnClickListener{
+            Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
+            onConfigClicked()
         }
     }
 
-    private fun onFloatingBtnClicked(){
-        clicked = !clicked
-        Log.i("EFB Info:::", "Clicked state: $clicked" )
-        setVisibility()
-        setAnimation()
+    private fun onFilterClicked(buttonList : List<Button>){
+        clickedFilter = !clickedFilter
+        Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
+        setFilterVisibility()
+        setFilterAnimation()
     }
 
-    private fun setAnimation() {
-        if(clicked){
-            for(btn in filterBtnList){
+    private fun setFilterAnimation() {
+        if(clickedFilter){
+            for(btn in filterList){
                 Log.i("ANIMATION INFO:::", "ANIMATING OPENING" )
-                btn.startAnimation(fromBottom)
+                btn.startAnimation(fromBottomFilter)
             }
 
-            filterBtn.startAnimation(rotateOpen)
+            filterBtn.startAnimation(rotateFilterOpen)
         } else {
-            for(btn in filterBtnList){
+            for(btn in filterList){
                 Log.i("ANIMATION INFO:::", "ANIMATING CLOSING" )
-                btn.startAnimation(toBottom)
+                btn.startAnimation(toBottomFilter)
             }
 
-            filterBtn.startAnimation(rotateClose)
+            filterBtn.startAnimation(rotateFilterClose)
         }
     }
 
-    private fun setVisibility() {
-        if(!clicked){
-            for(btn in filterBtnList){
+    private fun setFilterVisibility() {
+        if(!clickedFilter){
+            for(btn in filterList){
                 btn.visibility = View.GONE
                 btn.isClickable = false
             }
         } else {
-            for(btn in filterBtnList){
+            for(btn in filterList){
                 btn.visibility = View.VISIBLE
                 btn.isClickable = true
             }
         }
     }
 
-    private fun onSettingsClicked(){
-        clicked = !clicked
-        Log.i("EFB Info:::", "Clicked state: $clicked" )
-        setAnimationSettings()
-        setSettingsVisibility()
+
+    private fun onConfigClicked(){
+        clickedConfig = !clickedConfig
+        Log.i("EFB Info:::", "Clicked state: $clickedConfig" )
+        setConfigVisibility()
+        setConfigAnimation()
     }
 
-    private fun setAnimationSettings() {
-        if(clicked){
-            for(btn in filterBtnList){
+    private fun setConfigAnimation() {
+        if(clickedConfig){
+            for(btn in configList){
                 Log.i("ANIMATION INFO:::", "ANIMATING OPENING" )
-                btn.startAnimation(fromBottom)
+                btn.startAnimation(fromBottomSettings)
             }
 
-            filterBtn.startAnimation(rotateOpen)
+            configBtn.startAnimation(rotateSettingsOpen)
         } else {
-            for(btn in filterBtnList){
+            for(btn in configList){
                 Log.i("ANIMATION INFO:::", "ANIMATING CLOSING" )
-                btn.startAnimation(toBottom)
+                btn.startAnimation(toBottomSettings)
             }
 
-            filterBtn.startAnimation(rotateClose)
+            configBtn.startAnimation(rotateSettingsClose)
         }
     }
 
-    private fun setSettingsVisibility() {
-        if(!clicked){
-            for(btn in filterBtnList){
+    private fun setConfigVisibility() {
+        if(!clickedConfig){
+            for(btn in configList){
                 btn.visibility = View.GONE
+                btn.isClickable = false
             }
         } else {
-            for(btn in filterBtnList){
+            for(btn in configList){
                 btn.visibility = View.VISIBLE
+                btn.isClickable = true
             }
         }
     }
+
 
     //TODO Add server based JSON parser to load the graph into the TreeGraphActivity
-
+    //TODO Add capability to reload graph based on edited node (redraw)
     private fun setupGraphView(graph: Graph) {
         adapter = object : AbstractGraphAdapter<NodeViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
@@ -190,6 +235,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
             }
             adapter.notifyDataSetChanged()
         }
+
         fab.setOnLongClickListener {
             if (currentNode != null) {
                 graph.removeNode(currentNode!!)
@@ -201,16 +247,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         }
     }
 
-    /*private fun setupToolbar() {
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        val ab = supportActionBar
-        if (ab != null) {
-            ab.setHomeAsUpIndicator(R.drawable.ic_arrow_back)
-            ab.setDisplayHomeAsUpEnabled(true)
-        }
-    }*/
-
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -221,16 +257,45 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
 
         init {
             itemView.setOnClickListener {
+
                 if (!fab.isShown) {
                     fab.show()
                 }
                 currentNode = adapter.getNode(bindingAdapterPosition)
-                Snackbar.make(itemView, "Clicked on " + adapter.getNodeData(bindingAdapterPosition)?.toString(),
-                        Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(itemView, "Clicked on " + adapter.getNodeData(bindingAdapterPosition)?.toString(), Snackbar.LENGTH_SHORT).show()
+
+                Snackbar.make(itemView, "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(), Snackbar.LENGTH_SHORT).show()
+
             }
         }
     }
 
-    protected val nodeText: String
+    private val nodeText: String
         get() = "Exemple " + nodeCount++
+
+
+    private fun setLayoutManager() {
+        val configuration = BuchheimWalkerConfiguration.Builder()
+            .setSiblingSeparation(100)
+            .setLevelSeparation(100)
+            .setSubtreeSeparation(100)
+            .setOrientation(BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM)
+            .build()
+        recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, configuration)
+    }
+
+    private fun setEdgeDecoration() {
+        recyclerView.addItemDecoration(TreeEdgeDecoration())
+    }
+
+    private fun createGraph(): Graph {
+        val graph = Graph()
+        return graph
+    }
+
+    //TODO recreate the graph based on the changed node (notify changes)
+    private fun recreateGraph() : Graph {
+        val newGraph = Graph()
+        return newGraph
+    }
 }
