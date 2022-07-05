@@ -6,19 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".TreeLoaderActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppBarOverlay">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/PopupOverlay" />
-    </com.google.android.material.appbar.AppBarLayout>
-
     <com.otaliastudios.zoom.ZoomLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -59,7 +46,7 @@
             tools:visibility="visible" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addNode"
+            android:id="@+id/configNode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
@@ -79,7 +66,7 @@
             android:id="@+id/deleteNode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/addNode"
+            android:layout_above="@+id/configNode"
             android:layout_alignParentEnd="true"
             android:layout_marginStart="@dimen/fab_margin"
             android:layout_marginEnd="@dimen/fab_margin"
@@ -90,7 +77,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:tint="#F1F6FB"
-            tools:visibility="visible" />
+            tools:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/createNode"
@@ -106,7 +93,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:tint="#F1F6FB"
-            tools:visibility="visible" />
+            tools:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/editNode"
@@ -122,7 +109,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:tint="#F1F6FB"
-            tools:visibility="visible" />
+            tools:visibility="gone" />
 
         <Button
             android:id="@+id/lay1"
@@ -141,7 +128,8 @@
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:tint="#F1F6FB" />
+            app:tint="#F1F6FB"
+            tools:visibility="gone"/>
 
         <Button
             android:id="@+id/lay2"
@@ -160,7 +148,8 @@
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:tint="#F1F6FB" />
+            app:tint="#F1F6FB"
+            tools:visibility="gone"/>
 
         <Button
             android:id="@+id/lay3"
@@ -179,7 +168,8 @@
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:tint="#F1F6FB" />
+            app:tint="#F1F6FB"
+            tools:visibility="gone"/>
 
         <Button
             android:id="@+id/lay4"
@@ -198,6 +188,7 @@
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:tint="#F1F6FB" />
+            app:tint="#F1F6FB"
+            tools:visibility="gone" />
     </RelativeLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
