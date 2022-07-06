@@ -80,7 +80,7 @@
             tools:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/createNode"
+            android:id="@+id/editNode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_above="@+id/deleteNode"
@@ -96,10 +96,10 @@
             tools:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/editNode"
+            android:id="@+id/createNode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/createNode"
+            android:layout_above="@+id/editNode"
             android:layout_alignParentEnd="true"
             android:layout_marginRight="@dimen/fab_margin"
             android:layout_marginBottom="@dimen/btn_margins"
@@ -123,7 +123,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:outlineSpotShadowColor="#00000000"
-            android:text="Button"
+            android:text="De dalt a baix"
             android:textAllCaps="false"
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -143,7 +143,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:outlineSpotShadowColor="#00000000"
-            android:text="Button"
+            android:text="De baix a dalt"
             android:textAllCaps="false"
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -163,7 +163,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:outlineSpotShadowColor="#00000000"
-            android:text="Button"
+            android:text="D'esquerra a dreta"
             android:textAllCaps="false"
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -183,7 +183,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:outlineSpotShadowColor="#00000000"
-            android:text="Button"
+            android:text="De dreta a esquerra"
             android:textAllCaps="false"
             app:backgroundTint="#1F2133"
             app:layout_constraintBottom_toBottomOf="parent"
