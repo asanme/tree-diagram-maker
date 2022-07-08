@@ -40,7 +40,9 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private lateinit var addBtn: FloatingActionButton
 
     private lateinit var builder : BuchheimWalkerConfiguration.Builder
-    private lateinit var alert: AlertDialog.Builder
+    private lateinit var deleteAlert: AlertDialog.Builder
+    private lateinit var editAlert: AlertDialog.Builder
+    private lateinit var addAlert: AlertDialog.Builder
 
     private var clickedFilter = false
     private var clickedConfig = false
@@ -61,7 +63,9 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph)
 
-        alert = AlertDialog.Builder(this)
+        deleteAlert = AlertDialog.Builder(this)
+        editAlert = AlertDialog.Builder(this)
+        addAlert = AlertDialog.Builder(this)
 
         filterBtn = findViewById(R.id.filterView)
         configBtn = findViewById(R.id.configNode)
@@ -139,6 +143,13 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         setFilterAnimation()
     }
 
+    private fun onConfigClicked(){
+        clickedConfig = !clickedConfig
+        Log.i("EFB Info:::", "Clicked state: $clickedConfig" )
+        setConfigVisibility()
+        setConfigAnimation()
+    }
+
     private fun setFilterAnimation() {
         if(clickedFilter){
             for(btn in filterList){
@@ -169,13 +180,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
                 btn.isClickable = true
             }
         }
-    }
-
-    private fun onConfigClicked(){
-        clickedConfig = !clickedConfig
-        Log.i("EFB Info:::", "Clicked state: $clickedConfig" )
-        setConfigVisibility()
-        setConfigAnimation()
     }
 
     private fun setConfigAnimation() {
@@ -253,19 +257,95 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
                 generateWarning(graph)
             }
         }
+
         //TODO Save elements into a new Node array, and then swap the old one with
         // the new one by replacing the old data with the new one
         editBtn.setOnClickListener {
-            val newGraph = Graph()
             if (currentNode != null) {
-                //Check node to replace (x and y axis are unique to each node)
-                for (node in graph.nodes) {
-                    if(node.x == currentNode!!.x && node.y == currentNode!!.y){
-                        node.data = "New data sheesh"
-                    }
-                }
+                generateEditNode(graph)
             }
         }
+    }
+
+    private fun generateNode(graph: Graph) {
+        val name = EditText(this)
+        var text = ""
+
+        addAlert.setTitle("Nova etiqueta")
+        addAlert.setMessage(
+            HtmlCompat.fromHtml(
+                "<b>Introdueix el nom de l'etiqueta</b>",
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
+        )
+
+        addAlert.setView(name)
+
+        addAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
+            if (name.text.toString() == "") {
+                Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
+                generateNode(graph)
+            } else {
+                text = name.text.toString()
+                createNode(text, graph)
+            }
+        }
+
+        addAlert.setNegativeButton("CANCELAR") { dialog, which ->
+            dialog.dismiss()
+        }
+
+        addAlert.show()
+    }
+
+    private fun generateEditNode(graph: Graph) {
+        val name = EditText(this)
+        var text = ""
+
+        editAlert.setTitle("Editar etiqueta")
+        editAlert.setMessage(
+            HtmlCompat.fromHtml(
+                "<b>Introdueix el nou nom</b>",
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
+        )
+
+        editAlert.setView(name)
+
+        editAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
+            if (name.text.toString() == "") {
+                Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
+                generateEditNode(graph)
+            } else {
+                text = name.text.toString()
+                editNode(text, graph)
+            }
+        }
+
+        editAlert.setNegativeButton("CANCELAR") { dialog, which ->
+            dialog.dismiss()
+        }
+
+        editAlert.show()
+    }
+
+    private fun generateWarning(graph: Graph) {
+        deleteAlert.setTitle("Alerta")
+        deleteAlert.setMessage(
+            HtmlCompat.fromHtml(
+                "Vols eliminar <b>${currentNode!!.data}</b>?",
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
+        )
+
+        deleteAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
+            deleteNode(graph)
+        }
+
+        deleteAlert.setNegativeButton("CANCELAR") { dialog, which ->
+        }
+
+        deleteAlert.show()
     }
 
     private fun createNode(name: String, graph: Graph) {
@@ -279,58 +359,24 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
     }
 
-    private fun generateNode(graph: Graph) {
-        val name = EditText(this)
-        var text = ""
-
-        alert.setTitle("Nova etiqueta")
-        alert.setMessage(
-            HtmlCompat.fromHtml(
-                "<b>Introdueix el nom de l'etiqueta</b>",
-                HtmlCompat.FROM_HTML_MODE_LEGACY
-            )
-        )
-
-        alert.setView(name)
-
-        alert.setPositiveButton(android.R.string.ok) { dialog, which ->
-            if (name.text.toString() == "") {
-                Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
-                generateNode(graph)
-            } else {
-                text = name.text.toString()
-                createNode(text, graph)
+    private fun editNode(text:String, graph:Graph){
+        //Check node to replace (x and y axis are unique to each node)
+        for (node in graph.nodes) {
+            if(node.x == currentNode!!.x && node.y == currentNode!!.y){
+                node.data = text
             }
         }
 
-        alert.setNegativeButton("CANCELAR") { dialog, which ->
-            dialog.dismiss()
-        }
-
-        alert.show()
+        adapter.notifyDataSetChanged()
     }
 
-    private fun generateWarning(graph: Graph) {
-        alert.setTitle("Alerta")
-        alert.setMessage(
-            HtmlCompat.fromHtml(
-                "Vols eliminar <b>${currentNode!!.data}</b>?",
-                HtmlCompat.FROM_HTML_MODE_LEGACY
-            )
-        )
-
-        alert.setPositiveButton(android.R.string.ok) { dialog, which ->
-            graph.removeNode(currentNode!!)
-            currentNode = null
-            adapter.notifyDataSetChanged()
-            hideConfig()
-            fab.hide()
-        }
-
-        alert.setNegativeButton("CANCELAR") { dialog, which ->
-        }
-
-        alert.show()
+    private fun deleteNode(graph: Graph) {
+        graph.removeNode(currentNode!!)
+        currentNode = null
+        adapter.notifyDataSetChanged()
+        hideConfig()
+        fab.hide()
+        Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -355,10 +401,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         }
     }
 
-    private val nodeText: String
-        get() = "Exemple " + nodeCount++
-
-
     private fun setLayoutManager() {
         val configuration = BuchheimWalkerConfiguration.Builder()
             .setSiblingSeparation(100)
@@ -375,35 +417,9 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
 
     private fun createGraph(): Graph {
         val graph = Graph()
-        val node1 = Node(nodeText)
-        val node2 = Node(nodeText)
-        val node3 = Node(nodeText)
-        val node4 = Node(nodeText)
-        val node5 = Node(nodeText)
-        val node6 = Node(nodeText)
-        val node8 = Node(nodeText)
-        val node7 = Node(nodeText)
-        val node9 = Node(nodeText)
-        val node10 = Node(nodeText)
-        val node11 = Node(nodeText)
-        val node12 = Node(nodeText)
+        val node1 = Node("1.\nTest")
+        val node2 = Node("2.\nSegon")
         graph.addEdge(node1, node2)
-        graph.addEdge(node1, node3)
-        graph.addEdge(node1, node4)
-        graph.addEdge(node2, node5)
-        graph.addEdge(node2, node6)
-        graph.addEdge(node6, node7)
-        graph.addEdge(node6, node8)
-        graph.addEdge(node4, node9)
-        graph.addEdge(node4, node10)
-        graph.addEdge(node4, node11)
-        graph.addEdge(node11, node12)
         return graph
-    }
-
-    //TODO recreate the graph based on the changed node (notify changes)
-    private fun recreateGraph() : Graph {
-        val newGraph = Graph()
-        return newGraph
     }
 }

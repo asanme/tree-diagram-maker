@@ -13,5 +13,6 @@
         android:layout_height="wrap_content"
         android:textColor="#F1F6FB"
         android:fontFamily="@font/inter"
-        tools:text="Node text here" />
+        tools:text="Node text here"
+        android:gravity="center"/>
 </LinearLayout>
