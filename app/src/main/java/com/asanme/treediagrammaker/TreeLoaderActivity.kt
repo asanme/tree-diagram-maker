@@ -425,7 +425,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         graph = Graph()
 
         //val path = "C:\\Users\\asanme\\AndroidStudioProjects\\TreeDiagramMaker\\tree-diagram-maker\\app\\src\\main\\java\\com\\asanme\\treediagrammaker\\testing.json"
-        val json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"Thuma\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
+        val json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
         val gson = Gson() // Or use new GsonBuilder().create();
         val tree: Nodes = gson.fromJson(json, Nodes::class.java)
         graph = Graph()
