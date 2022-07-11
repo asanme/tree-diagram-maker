@@ -1,5 +1,7 @@
 package com.asanme.treediagrammaker
 import com.google.gson.Gson
+import dev.bandb.graphview.graph.Graph
+import dev.bandb.graphview.graph.Node
 import java.io.FileReader
 import java.util.*
 
@@ -17,37 +19,32 @@ class Nodes(
 }
 
 private val pila: Deque<Nodes> = LinkedList()
+lateinit var prevNode : Node
+lateinit var graph: Graph
 
 fun main() {
     val path = "C:\\Users\\asanme\\AndroidStudioProjects\\TreeDiagramMaker\\tree-diagram-maker\\app\\src\\main\\java\\com\\asanme\\treediagrammaker\\testing.json"
-
     val gson = Gson() // Or use new GsonBuilder().create();
-
-    println("strict digraph tree {")
     val tree: Nodes = gson.fromJson(FileReader(path), Nodes::class.java)
+    graph = Graph()
+    println("root : ${tree.name}")
     pila.push(tree)
+
+    println("\nRoot Node: ${tree.name}\n")
     while(pila.isNotEmpty()){
-        checkForTesting(pila.pop())
+        checkForChildren(pila.pop())
     }
-    println("}")
 
-    //checkForChildren(tree, tree.name)
+    println(graph.edges)
 }
 
-fun checkForChildren(nodes: Nodes, previousNode: String){
-    //println(nodes)
-    for(node in nodes.children){
-        println("$previousNode -> ${node.name}")
-        if(node.hasChildren()){
-            checkForChildren(node, node.name)
-        }
-    }
-}
+fun checkForChildren(nodes: Nodes) {
+    val newNode = nodes
+    val node1 = Node(nodes.name)
 
-fun checkForTesting(nodes: Nodes){
-    //println(nodes)
     for(node in nodes.children){
         if(node.hasChildren()){
+            graph.addEdge(Node(nodes.name), Node(node.name))
             println("    ${nodes.name} -> ${node.name}")
             pila.push(node)
         }

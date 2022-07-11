@@ -16,12 +16,14 @@ import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 import dev.bandb.graphview.AbstractGraphAdapter
 import dev.bandb.graphview.graph.Graph
 import dev.bandb.graphview.graph.Node
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
+import java.io.FileReader
 import java.util.*
 
 abstract class TreeLoaderActivity : AppCompatActivity() {
@@ -29,6 +31,10 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     protected lateinit var adapter: AbstractGraphAdapter<NodeViewHolder>
     private lateinit var fab: FloatingActionButton
     private var currentNode: Node? = null
+    lateinit var graph : Graph
+
+    private val pila: Deque<Nodes> = LinkedList()
+
     private var nodeCount = 1
 
     private lateinit var filterList: List<Button>
@@ -416,10 +422,30 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     }
 
     private fun createGraph(): Graph {
-        val graph = Graph()
-        val node1 = Node("1.\nTest")
-        val node2 = Node("2.\nSegon")
-        graph.addEdge(node1, node2)
+        graph = Graph()
+
+        //val path = "C:\\Users\\asanme\\AndroidStudioProjects\\TreeDiagramMaker\\tree-diagram-maker\\app\\src\\main\\java\\com\\asanme\\treediagrammaker\\testing.json"
+        val json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"Thuma\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
+        val gson = Gson() // Or use new GsonBuilder().create();
+        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+        graph = Graph()
+        println("root : ${tree.name}")
+        pila.push(tree)
+
+        while(pila.isNotEmpty()){
+            checkForChildren(pila.pop())
+        }
+
         return graph
+    }
+
+    fun checkForChildren(nodes: Nodes) {
+        for(node in nodes.children){
+            if(node.hasChildren()){
+                graph.addEdge(Node(nodes.name), Node(node.name))
+                //println("    ${nodes.name} -> ${node.name}")
+                pila.push(node)
+            }
+        }
     }
 }

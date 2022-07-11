@@ -4,7 +4,12 @@
   [
     {
       "name":"B",
-      "children": [{}]
+      "children": [
+        {
+          "name":"Thuma",
+          "children": [{}]
+        }
+      ]
     },
     {
       "name":"C",
