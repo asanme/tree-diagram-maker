@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import dev.bandb.graphview.AbstractGraphAdapter
+import dev.bandb.graphview.graph.Edge
 import dev.bandb.graphview.graph.Graph
 import dev.bandb.graphview.graph.Node
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration
@@ -25,6 +26,10 @@ import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
 import java.io.FileReader
 import java.util.*
+import com.amplifyframework.core.Amplify
+import com.amplifyframework.AmplifyException
+import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
+import kotlin.collections.ArrayList
 
 abstract class TreeLoaderActivity : AppCompatActivity() {
     protected lateinit var recyclerView: RecyclerView
@@ -35,8 +40,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
 
     private val pila: Deque<Nodes> = LinkedList()
 
-    private var nodeCount = 1
-
     private lateinit var filterList: List<Button>
     private lateinit var configList: List<FloatingActionButton>
 
@@ -46,9 +49,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private lateinit var addBtn: FloatingActionButton
 
     private lateinit var builder : BuchheimWalkerConfiguration.Builder
-    private lateinit var deleteAlert: AlertDialog.Builder
-    private lateinit var editAlert: AlertDialog.Builder
-    private lateinit var addAlert: AlertDialog.Builder
 
     private var clickedFilter = false
     private var clickedConfig = false
@@ -65,25 +65,26 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private val fromBottomSettings: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.from_bottom_anim) }
     private val toBottomSettings: Animation by lazy { AnimationUtils.loadAnimation(this, R.anim.to_bottom_anim) }
 
+    private lateinit var binding : ActivityGraphBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_graph)
+        //View binding
+        binding = ActivityGraphBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        deleteAlert = AlertDialog.Builder(this)
-        editAlert = AlertDialog.Builder(this)
-        addAlert = AlertDialog.Builder(this)
+        filterBtn = binding.filterView
+        configBtn = binding.configNode
 
-        filterBtn = findViewById(R.id.filterView)
-        configBtn = findViewById(R.id.configNode)
+        editBtn = binding.editNode
+        deleteBtn = binding.deleteNode
+        addBtn = binding.createNode
 
-        editBtn = findViewById(R.id.editNode)
-        deleteBtn = findViewById(R.id.deleteNode)
-        addBtn = findViewById(R.id.createNode)
-
-        val layout1Btn = findViewById<Button>(R.id.lay1)
-        val layout2Btn = findViewById<Button>(R.id.lay2)
-        val layout3Btn = findViewById<Button>(R.id.lay3)
-        val layout4Btn = findViewById<Button>(R.id.lay4)
+        val layout1Btn = binding.lay1
+        val layout2Btn = binding.lay2
+        val layout3Btn = binding.lay3
+        val layout4Btn = binding.lay4
 
         filterList = Arrays.asList(layout1Btn, layout2Btn, layout3Btn, layout4Btn)
         configList = Arrays.asList(editBtn, deleteBtn, addBtn)
@@ -94,64 +95,64 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
 
         val graph = createGraph()
         recyclerView = findViewById(R.id.recycler)
+
+        hideOnCreate()
+        setupFab(graph)
         setLayoutManager()
         setEdgeDecoration()
         setupGraphView(graph)
-        setupFab(graph)
 
         layout1Btn.setOnClickListener {
-            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM)
-            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
-            recyclerView.adapter = adapter
+            buildLayoutOrientation(BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM)
         }
 
         layout2Btn.setOnClickListener {
-            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_BOTTOM_TOP)
-            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
-            recyclerView.adapter = adapter
+            buildLayoutOrientation(BuchheimWalkerConfiguration.ORIENTATION_BOTTOM_TOP)
         }
 
         layout3Btn.setOnClickListener {
-            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT)
-            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
-            recyclerView.adapter = adapter
+            buildLayoutOrientation(BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT)
         }
 
         layout4Btn.setOnClickListener {
-            builder.setOrientation(BuchheimWalkerConfiguration.ORIENTATION_RIGHT_LEFT)
-            recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
-            recyclerView.adapter = adapter
+            buildLayoutOrientation(BuchheimWalkerConfiguration.ORIENTATION_RIGHT_LEFT)
         }
 
-        for(btn in filterList){
-            btn.visibility = View.GONE
-        }
-
-        for(btn in configList){
-            btn.visibility = View.GONE
-        }
-
+        //Config buttons listeners
         filterBtn.setOnClickListener{
-            Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
-            onFilterClicked(filterList)
+            onFilterClicked()
         }
 
         configBtn.setOnClickListener{
-            Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
             onConfigClicked()
         }
     }
 
-    private fun onFilterClicked(buttonList : List<Button>){
+    private fun hideOnCreate() {
+        //Hide buttons
+        for (btn in filterList) {
+            btn.visibility = View.GONE
+        }
+
+        for (btn in configList) {
+            btn.visibility = View.GONE
+        }
+    }
+
+    private fun buildLayoutOrientation(orientation: Int){
+        builder.setOrientation(orientation)
+        recyclerView.layoutManager = BuchheimWalkerLayoutManager(this, builder.build())
+        recyclerView.adapter = adapter
+    }
+
+    private fun onFilterClicked(){
         clickedFilter = !clickedFilter
-        Log.i("EFB Info:::", "Clicked state: $clickedFilter" )
         setFilterVisibility()
         setFilterAnimation()
     }
 
     private fun onConfigClicked(){
         clickedConfig = !clickedConfig
-        Log.i("EFB Info:::", "Clicked state: $clickedConfig" )
         setConfigVisibility()
         setConfigAnimation()
     }
@@ -159,14 +160,12 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun setFilterAnimation() {
         if(clickedFilter){
             for(btn in filterList){
-                Log.i("ANIMATION INFO:::", "ANIMATING OPENING" )
                 btn.startAnimation(fromBottomFilter)
             }
 
             filterBtn.startAnimation(rotateFilterOpen)
         } else {
             for(btn in filterList){
-                Log.i("ANIMATION INFO:::", "ANIMATING CLOSING" )
                 btn.startAnimation(toBottomFilter)
             }
 
@@ -177,13 +176,13 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun setFilterVisibility() {
         if(!clickedFilter){
             for(btn in filterList){
-                btn.visibility = View.GONE
                 btn.isClickable = false
+                btn.visibility = View.GONE
             }
         } else {
             for(btn in filterList){
-                btn.visibility = View.VISIBLE
                 btn.isClickable = true
+                btn.visibility = View.VISIBLE
             }
         }
     }
@@ -191,14 +190,12 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun setConfigAnimation() {
         if(clickedConfig){
             for(btn in configList){
-                Log.i("ANIMATION INFO:::", "ANIMATING OPENING" )
                 btn.startAnimation(fromBottomSettings)
             }
 
             configBtn.startAnimation(rotateSettingsOpen)
         } else {
             for(btn in configList){
-                Log.i("ANIMATION INFO:::", "ANIMATING CLOSING" )
                 btn.startAnimation(toBottomSettings)
             }
 
@@ -210,14 +207,14 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         if(!clickedConfig){
             for(btn in configList){
                 btn.isEnabled = false
-                btn.visibility = View.GONE
                 btn.isClickable = false
+                btn.visibility = View.GONE
             }
         } else {
             for(btn in configList){
                 btn.isEnabled = true
-                btn.visibility = View.VISIBLE
                 btn.isClickable = true
+                btn.visibility = View.VISIBLE
             }
         }
     }
@@ -255,103 +252,82 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun setupFab(graph: Graph) {
         fab = findViewById(R.id.configNode)
         addBtn.setOnClickListener {
-            generateNode(graph)
-        }
-
-        deleteBtn.setOnClickListener {
-            if (currentNode != null) {
-                generateWarning(graph)
-            }
+            generateDialog("Nova etiqueta", "Introdueix el nom de l'etiqueta", "add")
         }
 
         //TODO Save elements into a new Node array, and then swap the old one with
         // the new one by replacing the old data with the new one
         editBtn.setOnClickListener {
             if (currentNode != null) {
-                generateEditNode(graph)
+                generateDialog("Editar etiqueta", "Introdueix el nou nom", "edit")
+            }
+        }
+
+        deleteBtn.setOnClickListener {
+            if (currentNode != null) {
+                generateDialog("Alerta", "Vols eliminar ${currentNode!!.data}?", "delete")
             }
         }
     }
 
-    private fun generateNode(graph: Graph) {
-        val name = EditText(this)
-        var text = ""
+    private fun generateDialog(title:String, message:String, type:String){
+        val newDialog = AlertDialog.Builder(this)
 
-        addAlert.setTitle("Nova etiqueta")
-        addAlert.setMessage(
-            HtmlCompat.fromHtml(
-                "<b>Introdueix el nom de l'etiqueta</b>",
-                HtmlCompat.FROM_HTML_MODE_LEGACY
-            )
-        )
+        when(type)
+        {
+            "add" ->
+            {
+                showDialog(newDialog, title, message, type,true)
+            }
 
-        addAlert.setView(name)
+            "edit" ->
+            {
+                showDialog(newDialog, title, message, type,true)
+            }
 
-        addAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
-            if (name.text.toString() == "") {
-                Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
-                generateNode(graph)
-            } else {
-                text = name.text.toString()
-                createNode(text, graph)
+            "delete" ->
+            {
+                showDialog(newDialog, title, message, type, false)
+            }
+        }
+    }
+
+    private fun showDialog(newDialog: AlertDialog.Builder, title: String, message: String, type:String, isEditable: Boolean) {
+        newDialog.setTitle(title)
+        newDialog.setMessage(message)
+
+        if(isEditable){
+            val name = EditText(this)
+            var text = ""
+            newDialog.setView(name)
+            newDialog.setPositiveButton(android.R.string.ok) { dialog, which ->
+                if (name.text.toString() == "") {
+                    Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
+                } else {
+                    text = name.text.toString()
+                    when(type){
+                        "add" -> {
+                            createNode(text, graph)
+                        }
+
+                        "edit" -> {
+                            editNode(text, graph)
+                        }
+                    }
+                    editNode(text, graph)
+                }
+            }
+        } else {
+            newDialog.setPositiveButton(android.R.string.ok) { dialog, which ->
+                deleteNode(graph)
             }
         }
 
-        addAlert.setNegativeButton("CANCELAR") { dialog, which ->
-            dialog.dismiss()
+        newDialog.setNegativeButton("CANCELAR") { dialog, which ->
+
         }
 
-        addAlert.show()
-    }
-
-    private fun generateEditNode(graph: Graph) {
-        val name = EditText(this)
-        var text = ""
-
-        editAlert.setTitle("Editar etiqueta")
-        editAlert.setMessage(
-            HtmlCompat.fromHtml(
-                "<b>Introdueix el nou nom</b>",
-                HtmlCompat.FROM_HTML_MODE_LEGACY
-            )
-        )
-
-        editAlert.setView(name)
-
-        editAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
-            if (name.text.toString() == "") {
-                Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
-                generateEditNode(graph)
-            } else {
-                text = name.text.toString()
-                editNode(text, graph)
-            }
-        }
-
-        editAlert.setNegativeButton("CANCELAR") { dialog, which ->
-            dialog.dismiss()
-        }
-
-        editAlert.show()
-    }
-
-    private fun generateWarning(graph: Graph) {
-        deleteAlert.setTitle("Alerta")
-        deleteAlert.setMessage(
-            HtmlCompat.fromHtml(
-                "Vols eliminar <b>${currentNode!!.data}</b>?",
-                HtmlCompat.FROM_HTML_MODE_LEGACY
-            )
-        )
-
-        deleteAlert.setPositiveButton(android.R.string.ok) { dialog, which ->
-            deleteNode(graph)
-        }
-
-        deleteAlert.setNegativeButton("CANCELAR") { dialog, which ->
-        }
-
-        deleteAlert.show()
+        newDialog.show()
     }
 
     private fun createNode(name: String, graph: Graph) {
@@ -395,13 +371,10 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
 
         init {
             itemView.setOnClickListener {
-
                 if (!fab.isShown) {
                     fab.show()
                 }
                 currentNode = adapter.getNode(bindingAdapterPosition)
-                Snackbar.make(itemView, "Clicked on " + adapter.getNodeData(bindingAdapterPosition)?.toString(), Snackbar.LENGTH_SHORT).show()
-
                 Snackbar.make(itemView, "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(), Snackbar.LENGTH_SHORT).show()
             }
         }
@@ -431,7 +404,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         graph = Graph()
         println("root : ${tree.name}")
         pila.push(tree)
-
         while(pila.isNotEmpty()){
             checkForChildren(pila.pop())
         }
@@ -443,7 +415,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         for(node in nodes.children){
             if(node.hasChildren()){
                 graph.addEdge(Node(nodes.name), Node(node.name))
-                //println("    ${nodes.name} -> ${node.name}")
                 pila.push(node)
             }
         }
