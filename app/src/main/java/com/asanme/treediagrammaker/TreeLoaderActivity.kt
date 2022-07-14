@@ -29,6 +29,7 @@ import java.util.*
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.AmplifyException
 import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
+import com.google.gson.JsonObject
 import kotlin.collections.ArrayList
 
 abstract class TreeLoaderActivity : AppCompatActivity() {
@@ -36,9 +37,14 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     protected lateinit var adapter: AbstractGraphAdapter<NodeViewHolder>
     private lateinit var fab: FloatingActionButton
     private var currentNode: Node? = null
+    private lateinit var json: String
     lateinit var graph : Graph
+    lateinit var newGraph : Graph
+
+    lateinit var allNodes: ArrayList<Nodes>
 
     private val pila: Deque<Nodes> = LinkedList()
+    private val newStack: Deque<Nodes> = LinkedList()
 
     private lateinit var filterList: List<Button>
     private lateinit var configList: List<FloatingActionButton>
@@ -96,8 +102,8 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         val graph = createGraph()
         recyclerView = findViewById(R.id.recycler)
 
+        setupFab()
         hideOnCreate()
-        setupFab(graph)
         setLayoutManager()
         setEdgeDecoration()
         setupGraphView(graph)
@@ -249,7 +255,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupFab(graph: Graph) {
+    private fun setupFab() {
         fab = findViewById(R.id.configNode)
         addBtn.setOnClickListener {
             generateDialog("Nova etiqueta", "Introdueix el nom de l'etiqueta", "add")
@@ -314,7 +320,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
                             editNode(text, graph)
                         }
                     }
-                    editNode(text, graph)
                 }
             }
         } else {
@@ -342,23 +347,16 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     }
 
     private fun editNode(text:String, graph:Graph){
-        //Check node to replace (x and y axis are unique to each node)
-        for (node in graph.nodes) {
-            if(node.x == currentNode!!.x && node.y == currentNode!!.y){
-                node.data = text
-            }
-        }
-
-        adapter.notifyDataSetChanged()
+        setupGraphView(replaceJson(json, currentNode!!.data.toString(), text))
     }
 
     private fun deleteNode(graph: Graph) {
         graph.removeNode(currentNode!!)
         currentNode = null
         adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
         hideConfig()
         fab.hide()
-        Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -374,6 +372,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
                 if (!fab.isShown) {
                     fab.show()
                 }
+
                 currentNode = adapter.getNode(bindingAdapterPosition)
                 Snackbar.make(itemView, "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(), Snackbar.LENGTH_SHORT).show()
             }
@@ -397,12 +396,10 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun createGraph(): Graph {
         graph = Graph()
 
-        //val path = "C:\\Users\\asanme\\AndroidStudioProjects\\TreeDiagramMaker\\tree-diagram-maker\\app\\src\\main\\java\\com\\asanme\\treediagrammaker\\testing.json"
-        val json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
-        val gson = Gson() // Or use new GsonBuilder().create();
+        //TODO load json from db
+        json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
+        val gson = Gson()
         val tree: Nodes = gson.fromJson(json, Nodes::class.java)
-        graph = Graph()
-        println("root : ${tree.name}")
         pila.push(tree)
         while(pila.isNotEmpty()){
             checkForChildren(pila.pop())
@@ -411,11 +408,44 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         return graph
     }
 
-    fun checkForChildren(nodes: Nodes) {
+    private fun checkForChildren(nodes: Nodes) {
         for(node in nodes.children){
             if(node.hasChildren()){
                 graph.addEdge(Node(nodes.name), Node(node.name))
                 pila.push(node)
+            }
+        }
+    }
+
+    private fun replaceJson(currentJson:String, oldData:String, newData:String): Graph{
+        newGraph = Graph()
+        newStack.clear()
+        val gson = Gson()
+        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+        allNodes = ArrayList()
+        newStack.push(tree)
+        val newJson = ""
+        while(newStack.isNotEmpty()){
+            replaceData(newStack.pop(), oldData, newData)
+        }
+
+        val json = gson.toJson(allNodes)
+        println("JSON DATA: $json")
+        return newGraph
+    }
+
+    private fun replaceData(nodes: Nodes, oldData:String, newData:String){
+        for(node in nodes.children){
+            if(node.hasChildren()){
+                if(node.name == oldData){
+                    println("REPLACING ${node.name} FOR ${newData}")
+                    newGraph.addEdge(Node(nodes.name), Node(newData))
+                    newStack.push(Nodes(newData, node.children))
+                    allNodes.add(Nodes(newData, node.children))
+                } else {
+                    newGraph.addEdge(Node(nodes.name), Node(node.name))
+                    newStack.push(node)
+                }
             }
         }
     }
