@@ -2,9 +2,10 @@ package com.asanme.treediagrammaker
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.text.Html
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.Button
@@ -12,27 +13,20 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import dev.bandb.graphview.AbstractGraphAdapter
-import dev.bandb.graphview.graph.Edge
 import dev.bandb.graphview.graph.Graph
 import dev.bandb.graphview.graph.Node
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
-import java.io.FileReader
 import java.util.*
-import com.amplifyframework.core.Amplify
-import com.amplifyframework.AmplifyException
-import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
-import com.google.gson.JsonObject
-import kotlin.collections.ArrayList
 
-abstract class TreeLoaderActivity : AppCompatActivity() {
+class TreeLoaderActivity : AppCompatActivity() {
     protected lateinit var recyclerView: RecyclerView
     protected lateinit var adapter: AbstractGraphAdapter<NodeViewHolder>
     private lateinit var fab: FloatingActionButton
@@ -40,9 +34,6 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private lateinit var json: String
     lateinit var graph : Graph
     lateinit var newGraph : Graph
-
-    lateinit var allNodes: ArrayList<Nodes>
-
     private val pila: Deque<Nodes> = LinkedList()
     private val newStack: Deque<Nodes> = LinkedList()
 
@@ -324,7 +315,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
             }
         } else {
             newDialog.setPositiveButton(android.R.string.ok) { dialog, which ->
-                deleteNode(graph)
+                deleteNode()
             }
         }
 
@@ -350,8 +341,9 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         setupGraphView(replaceJson(json, currentNode!!.data.toString(), text))
     }
 
-    private fun deleteNode(graph: Graph) {
-        graph.removeNode(currentNode!!)
+    private fun deleteNode() {
+        Log.i("NEWGRAPH INFO:::","${newGraph.edges}")
+        newGraph.removeNode(currentNode!!)
         currentNode = null
         adapter.notifyDataSetChanged()
         Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
@@ -396,7 +388,7 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
     private fun createGraph(): Graph {
         graph = Graph()
 
-        //TODO load json from db
+        //TODO load json from db!
         json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
         val gson = Gson()
         val tree: Nodes = gson.fromJson(json, Nodes::class.java)
@@ -417,35 +409,35 @@ abstract class TreeLoaderActivity : AppCompatActivity() {
         }
     }
 
-    private fun replaceJson(currentJson:String, oldData:String, newData:String): Graph{
+    private fun replaceJson(currentJson:String, oldData:String, newData:String): Graph {
         newGraph = Graph()
         newStack.clear()
         val gson = Gson()
         val tree: Nodes = gson.fromJson(json, Nodes::class.java)
-        allNodes = ArrayList()
         newStack.push(tree)
-        val newJson = ""
         while(newStack.isNotEmpty()){
             replaceData(newStack.pop(), oldData, newData)
         }
-
-        val json = gson.toJson(allNodes)
-        println("JSON DATA: $json")
+        json = json.replace(oldData, newData, ignoreCase = false)
+        println(json)
         return newGraph
     }
 
     private fun replaceData(nodes: Nodes, oldData:String, newData:String){
         for(node in nodes.children){
             if(node.hasChildren()){
+                println(node.children)
                 if(node.name == oldData){
-                    println("REPLACING ${node.name} FOR ${newData}")
+                    //println("REPLACING ${node.name} FOR ${newData}")
                     newGraph.addEdge(Node(nodes.name), Node(newData))
                     newStack.push(Nodes(newData, node.children))
-                    allNodes.add(Nodes(newData, node.children))
+                    //jsonObject.put(node.name, nodes)
                 } else {
                     newGraph.addEdge(Node(nodes.name), Node(node.name))
                     newStack.push(node)
                 }
+            } else {
+                println("nochildren")
             }
         }
     }
