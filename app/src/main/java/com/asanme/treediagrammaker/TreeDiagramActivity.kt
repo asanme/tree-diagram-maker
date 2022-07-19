@@ -1,5 +1,6 @@
 package com.asanme.treediagrammaker
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
@@ -29,6 +30,7 @@ import java.util.*
 //TODO Add capability to reload graph based on edited node
 //TODO Save elements into a new Node array, and then swap the old one with the new one by replacing the old data with the new one
 //TODO load json from db!
+@SuppressLint("NotifyDataSetChanged")
 
 /**
  * Main class used to generate diagrams
@@ -80,7 +82,7 @@ class TreeDiagramActivity : AppCompatActivity() {
             .setLevelSeparation(300)
             .setSubtreeSeparation(300)
 
-        val graph = createGraph()
+        newGraph = createGraph()
         recyclerView = findViewById(R.id.recycler)
 
         hideOnCreate()
@@ -381,10 +383,10 @@ class TreeDiagramActivity : AppCompatActivity() {
      * @see Graph
      */
     private fun deleteNode() {
-        //Log.i("NEWGRAPH INFO:::", "${newGraph.edges}")
-        //newGraph.removeNode(currentNode!!)
-        //currentNode = null
-        //adapter.notifyDataSetChanged()
+        Log.i("NEWGRAPH INFO:::", "${newGraph.edges}")
+        newGraph.removeNode(currentNode!!)
+        currentNode = null
+        adapter.notifyDataSetChanged()
         Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
         hideConfig()
         fab.hide()
@@ -487,7 +489,7 @@ class TreeDiagramActivity : AppCompatActivity() {
             replaceData(newStack.pop(), oldData, newData)
         }
         json = json.replace(oldData, newData, ignoreCase = false)
-        println(json)
+        //println(json)
         return newGraph
     }
 
@@ -501,7 +503,7 @@ class TreeDiagramActivity : AppCompatActivity() {
     private fun replaceData(nodes: Nodes, oldData: String, newData: String) {
         for (node in nodes.children) {
             if (node.hasChildren()) {
-                println(node.children)
+                //println(node.children)
                 if (node.name == oldData) {
                     //println("REPLACING ${node.name} FOR ${newData}")
                     newGraph.addEdge(Node(nodes.name), Node(newData))
@@ -512,7 +514,7 @@ class TreeDiagramActivity : AppCompatActivity() {
                     newStack.push(node)
                 }
             } else {
-                println("nochildren")
+                //println("nochildren")
             }
         }
     }
