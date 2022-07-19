@@ -4,6 +4,9 @@ import android.content.Context
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 
+/**
+ * Class used to load all the animations for the main class
+ */
 class Animations(context: Context) {
     val rotateFilterOpen: Animation by lazy {
         AnimationUtils.loadAnimation(

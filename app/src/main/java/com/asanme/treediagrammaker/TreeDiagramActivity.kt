@@ -31,8 +31,8 @@ import java.util.*
 //TODO load json from db!
 
 /**
- * @author asanme
  * Main class used to generate diagrams
+ * @author asanme
  */
 class TreeDiagramActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
@@ -91,11 +91,15 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
+     * Method used to setup all the listeners required
      * @param layout1Btn changes the orientation to ORIENTATION_TOP_BOTTOM
      * @param layout2Btn changes the orientation to ORIENTATION_BOTTOM_TOP
      * @param layout3Btn changes the orientation to ORIENTATION_LEFT_RIGHT
      * @param layout4Btn changes the orientation to ORIENTATION_RIGHT_LEFT
-     * Method used to setup all the listeners required
+     * @see buildLayoutOrientation
+     * @see onFilterClicked
+     * @see onConfigClicked
+     * @see generateDialog
      */
     private fun setupListeners(layout1Btn:Button, layout2Btn:Button, layout3Btn:Button, layout4Btn:Button){
         fab = findViewById(R.id.configNode)
@@ -142,8 +146,7 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * Method used to prevent the buttons from showing up onCreate()
-     * Hides the filter buttons and configuration buttons
+     * Method used hide the filter and configuration buttons onCreate()
      */
     private fun hideOnCreate() {
         for (btn in filterList) {
@@ -156,8 +159,8 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * @param orientation value of the orientation
      * Method used to change the orientation of the
+     * @param orientation value of the orientation
      * @see BuchheimWalkerConfiguration
      */
     private fun buildLayoutOrientation(orientation: Int) {
@@ -168,6 +171,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
     /**
      * Method used to setup the animations and visibility of filter buttons
+     * @see setFilterAnimation
      */
     private fun onFilterClicked() {
         clickedFilter = !clickedFilter
@@ -176,6 +180,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
     /**
      * Method used to setup the animations and visibility of configuration buttons
+     * @see setConfigAnimation
      */
     private fun onConfigClicked() {
         clickedConfig = !clickedConfig
@@ -184,6 +189,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
     /**
      * Method used to load the animation of the filter buttons
+     * @see Animations
      */
     private fun setFilterAnimation() {
         if (clickedFilter) {
@@ -207,6 +213,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
     /**
      * Method used to load the animation of the configuration buttons
+     * @see Animations
      */
     private fun setConfigAnimation() {
         if (clickedConfig) {
@@ -232,6 +239,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
     /**
      * Method used to hide the configuration buttons
+     * @see Animations
      */
     private fun hideConfig() {
         for (btn in configList) {
@@ -245,8 +253,8 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * @param graph Graph that represents the data to be displayed
      * Method used to load the default graph or even reload with a new one
+     * @param graph Graph that represents the data to be displayed
      * @see Graph
      */
     private fun setupGraphView(graph: Graph) {
@@ -267,10 +275,10 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
+     * Method used to simplify the process of creating a dialog
      * @param title represents the title that will be displayed within the dialog when the user clicks a configuration button
      * @param message represents the message that will be displayed within the dialog when the user clicks a configuration button
      * @param type represents the type of dialog that will be displayed when the user clicks a configuration button
-     * Method used to simplify the process of creating a dialog
      */
     private fun generateDialog(title: String, message: String, type: String) {
         val newDialog = AlertDialog.Builder(this)
@@ -290,12 +298,12 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
+     * Method used to display a new dialog when clicking on a configuration button
      * @param newDialog previously created dialog
      * @param title title of the dialog
      * @param message message of the dialog
      * @param type type of dialog
      * @param isEditable weather or not there should be an EditText within the dialog
-     * Method used to display a new dialog when clicking on a configuration button
      */
     private fun showDialog(
         newDialog: AlertDialog.Builder,
@@ -341,9 +349,9 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
+     * Method used to add a new Node to the current Graph
      * @param graph Graph to which the node will be added
      * @param name Data that will be displayed upon adding the Node
-     * Method used to add a new Node to the current Graph
      * @see Graph
      */
     private fun createNode(name: String, graph: Graph) {
@@ -423,12 +431,17 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * 
+     * Makes the graph display the information with tree shape
+     * @see TreeEdgeDecoration
      */
     private fun setEdgeDecoration() {
         recyclerView.addItemDecoration(TreeEdgeDecoration())
     }
 
+    /**
+     * Method used to generate the default graph
+     * @see Graph
+     */
     private fun createGraph(): Graph {
         graph = Graph()
 
@@ -443,6 +456,11 @@ class TreeDiagramActivity : AppCompatActivity() {
         return graph
     }
 
+    /**
+     * Recursive method used to generate the graph with the JSON
+     * @see Nodes
+     * @see Graph
+     */
     private fun checkForChildren(nodes: Nodes) {
         for (node in nodes.children) {
             if (node.hasChildren()) {
@@ -452,6 +470,13 @@ class TreeDiagramActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Method used to replace the current JSON with a new one by replacing the selected node with new data
+     * @param newData new entered data
+     * @param oldData data to be replaced
+     * @see Gson
+     * @see Deque
+     */
     private fun replaceJson(oldData: String, newData: String): Graph {
         newGraph = Graph()
         newStack.clear()
@@ -466,6 +491,13 @@ class TreeDiagramActivity : AppCompatActivity() {
         return newGraph
     }
 
+    /**
+     * Method used to replace the data passed within the Deque
+     * @param nodes List of Nodes
+     * @param newData new entered data
+     * @param oldData data to be replaced
+     * @see Nodes
+     */
     private fun replaceData(nodes: Nodes, oldData: String, newData: String) {
         for (node in nodes.children) {
             if (node.hasChildren()) {
