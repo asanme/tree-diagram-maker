@@ -93,6 +93,128 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
+     * Method used to generate the default graph
+     * @see Graph
+     */
+    private fun createGraph(): Graph {
+        graph = Graph()
+
+        json =
+            "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
+        val gson = Gson()
+        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+        pila.push(tree)
+        while (pila.isNotEmpty()) {
+            checkForChildren(pila.pop())
+        }
+
+        return graph
+    }
+
+    /**
+     * Recursive method used to generate the graph with the JSON
+     * @see Nodes
+     * @see Graph
+     */
+    private fun checkForChildren(nodes: Nodes) {
+        for (node in nodes.children) {
+            if (node.hasChildren()) {
+                graph.addEdge(Node(nodes.name), Node(node.name))
+                pila.push(node)
+            }
+        }
+    }
+
+    /**
+     * Method used to add a new Node to the current Graph
+     * @param graph Graph to which the node will be added
+     * @param name Data that will be displayed upon adding the Node
+     * @see Graph
+     */
+    private fun createNode(name: String, graph: Graph) {
+        val newNode = Node(name)
+        if (currentNode != null) {
+            graph.addEdge(currentNode!!, newNode)
+        } else {
+            graph.addNode(newNode)
+        }
+
+        adapter.notifyDataSetChanged()
+    }
+
+    /**
+     * @param text Text that will replace the old data
+     * Method used to edit the selected node
+     * @see setupGraphView
+     * @see replaceJson
+     */
+    private fun editNode(text: String) {
+        setupGraphView(replaceJson(currentNode!!.data.toString(), text))
+    }
+
+    /**
+     * Method used to delete the selected Node
+     * @see Node
+     * @see Graph
+     */
+    private fun deleteNode() {
+        Log.i("NEWGRAPH INFO:::", "${newGraph.edges}")
+        newGraph.removeNode(currentNode!!)
+        currentNode = null
+        adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
+        hideConfig()
+        fab.hide()
+    }
+
+    /**
+     * Method used to replace the current JSON with a new one by replacing the selected node with new data
+     * @param newData new entered data
+     * @param oldData data to be replaced
+     * @see Gson
+     * @see Deque
+     */
+    private fun replaceJson(oldData: String, newData: String): Graph {
+        newGraph = Graph()
+        newStack.clear()
+        val gson = Gson()
+        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+        newStack.push(tree)
+        while (newStack.isNotEmpty()) {
+            replaceData(newStack.pop(), oldData, newData)
+        }
+        json = json.replace(oldData, newData, ignoreCase = false)
+        //println(json)
+        return newGraph
+    }
+
+    /**
+     * Method used to replace the data passed within the Deque
+     * @param nodes List of Nodes
+     * @param newData new entered data
+     * @param oldData data to be replaced
+     * @see Nodes
+     */
+    private fun replaceData(nodes: Nodes, oldData: String, newData: String) {
+        for (node in nodes.children) {
+            if (node.hasChildren()) {
+                //println(node.children)
+                if (node.name == oldData) {
+                    //println("REPLACING ${node.name} FOR ${newData}")
+                    newGraph.addEdge(Node(nodes.name), Node(newData))
+                    newStack.push(Nodes(newData, node.children))
+                    //jsonObject.put(node.name, nodes)
+                } else {
+                    newGraph.addEdge(Node(nodes.name), Node(node.name))
+                    newStack.push(node)
+                }
+            } else {
+                //println("nochildren")
+            }
+        }
+    }
+
+    /**
      * Method used to setup all the listeners required
      * @param layout1Btn changes the orientation to ORIENTATION_TOP_BOTTOM
      * @param layout2Btn changes the orientation to ORIENTATION_BOTTOM_TOP
@@ -103,7 +225,12 @@ class TreeDiagramActivity : AppCompatActivity() {
      * @see onConfigClicked
      * @see generateDialog
      */
-    private fun setupListeners(layout1Btn:Button, layout2Btn:Button, layout3Btn:Button, layout4Btn:Button){
+    private fun setupListeners(
+        layout1Btn: Button,
+        layout2Btn: Button,
+        layout3Btn: Button,
+        layout4Btn: Button
+    ) {
         fab = findViewById(R.id.configNode)
 
         layout1Btn.setOnClickListener {
@@ -255,28 +382,6 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * Method used to load the default graph or even reload with a new one
-     * @param graph Graph that represents the data to be displayed
-     * @see Graph
-     */
-    private fun setupGraphView(graph: Graph) {
-        adapter = object : AbstractGraphAdapter<NodeViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.node, parent, false)
-                return NodeViewHolder(view)
-            }
-
-            override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
-                holder.textView.text = Objects.requireNonNull(getNodeData(position)).toString()
-            }
-        }.apply {
-            this.submitGraph(graph)
-            recyclerView.adapter = this
-        }
-    }
-
-    /**
      * Method used to simplify the process of creating a dialog
      * @param title represents the title that will be displayed within the dialog when the user clicks a configuration button
      * @param message represents the message that will be displayed within the dialog when the user clicks a configuration button
@@ -319,7 +424,7 @@ class TreeDiagramActivity : AppCompatActivity() {
 
         if (isEditable) {
             val name = EditText(this)
-            var text:String
+            var text: String
             newDialog.setView(name)
             newDialog.setPositiveButton(android.R.string.ok) { _, _ ->
                 if (name.text.toString() == "") {
@@ -351,50 +456,25 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * Method used to add a new Node to the current Graph
-     * @param graph Graph to which the node will be added
-     * @param name Data that will be displayed upon adding the Node
+     * Method used to load the default graph or even reload with a new one
+     * @param graph Graph that represents the data to be displayed
      * @see Graph
      */
-    private fun createNode(name: String, graph: Graph) {
-        val newNode = Node(name)
-        if (currentNode != null) {
-            graph.addEdge(currentNode!!, newNode)
-        } else {
-            graph.addNode(newNode)
+    private fun setupGraphView(graph: Graph) {
+        adapter = object : AbstractGraphAdapter<NodeViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.node, parent, false)
+                return NodeViewHolder(view)
+            }
+
+            override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
+                holder.textView.text = Objects.requireNonNull(getNodeData(position)).toString()
+            }
+        }.apply {
+            this.submitGraph(graph)
+            recyclerView.adapter = this
         }
-
-        adapter.notifyDataSetChanged()
-    }
-
-    /**
-     * @param text Text that will replace the old data
-     * Method used to edit the selected node
-     * @see setupGraphView
-     * @see replaceJson
-     */
-    private fun editNode(text: String) {
-        setupGraphView(replaceJson(currentNode!!.data.toString(), text))
-    }
-
-    /**
-     * Method used to delete the selected Node
-     * @see Node
-     * @see Graph
-     */
-    private fun deleteNode() {
-        Log.i("NEWGRAPH INFO:::", "${newGraph.edges}")
-        newGraph.removeNode(currentNode!!)
-        currentNode = null
-        adapter.notifyDataSetChanged()
-        Toast.makeText(this, "Deleted node", Toast.LENGTH_SHORT).show()
-        hideConfig()
-        fab.hide()
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
 
     private inner class NodeViewHolder constructor(itemView: View) :
@@ -415,6 +495,12 @@ class TreeDiagramActivity : AppCompatActivity() {
                 ).show()
             }
         }
+
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 
     /**
@@ -438,84 +524,5 @@ class TreeDiagramActivity : AppCompatActivity() {
      */
     private fun setEdgeDecoration() {
         recyclerView.addItemDecoration(TreeEdgeDecoration())
-    }
-
-    /**
-     * Method used to generate the default graph
-     * @see Graph
-     */
-    private fun createGraph(): Graph {
-        graph = Graph()
-
-        json = "{  \"name\":\"A\",  \"children\":  [    {      \"name\":\"B\",      \"children\": [        {          \"name\":\"G\",          \"children\": [{}]        }      ]    },    {      \"name\":\"C\",      \"children\":      [        {          \"name\":\"D\",          \"children\":          [            {              \"name\":\"E\",              \"children\": [{}]            },            {              \"name\":\"F\",              \"children\": [{}]            }          ]        }      ]    }  ]}"
-        val gson = Gson()
-        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
-        pila.push(tree)
-        while (pila.isNotEmpty()) {
-            checkForChildren(pila.pop())
-        }
-
-        return graph
-    }
-
-    /**
-     * Recursive method used to generate the graph with the JSON
-     * @see Nodes
-     * @see Graph
-     */
-    private fun checkForChildren(nodes: Nodes) {
-        for (node in nodes.children) {
-            if (node.hasChildren()) {
-                graph.addEdge(Node(nodes.name), Node(node.name))
-                pila.push(node)
-            }
-        }
-    }
-
-    /**
-     * Method used to replace the current JSON with a new one by replacing the selected node with new data
-     * @param newData new entered data
-     * @param oldData data to be replaced
-     * @see Gson
-     * @see Deque
-     */
-    private fun replaceJson(oldData: String, newData: String): Graph {
-        newGraph = Graph()
-        newStack.clear()
-        val gson = Gson()
-        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
-        newStack.push(tree)
-        while (newStack.isNotEmpty()) {
-            replaceData(newStack.pop(), oldData, newData)
-        }
-        json = json.replace(oldData, newData, ignoreCase = false)
-        //println(json)
-        return newGraph
-    }
-
-    /**
-     * Method used to replace the data passed within the Deque
-     * @param nodes List of Nodes
-     * @param newData new entered data
-     * @param oldData data to be replaced
-     * @see Nodes
-     */
-    private fun replaceData(nodes: Nodes, oldData: String, newData: String) {
-        for (node in nodes.children) {
-            if (node.hasChildren()) {
-                //println(node.children)
-                if (node.name == oldData) {
-                    //println("REPLACING ${node.name} FOR ${newData}")
-                    newGraph.addEdge(Node(nodes.name), Node(newData))
-                    newStack.push(Nodes(newData, node.children))
-                    //jsonObject.put(node.name, nodes)
-                } else {
-                    newGraph.addEdge(Node(nodes.name), Node(node.name))
-                    newStack.push(node)
-                }
-            } else {
-                //println("nochildren")
-            }
-        }
     }
 }
