@@ -21,6 +21,27 @@
     </com.otaliastudios.zoom.ZoomLayout>
 
     <RelativeLayout
+        android:id="@+id/iconContainer"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="top"
+        app:layout_dodgeInsetEdges="bottom">
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="290dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="0dp"
+            android:contentDescription="@string/bombers_catalunya"
+            android:src="@drawable/bombers" />
+    </RelativeLayout>
+
+    <RelativeLayout
         android:id="@+id/buttonsContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -28,6 +49,7 @@
         android:layout_gravity="bottom">
 
         <!--Your Buttons here-->
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/filterView"
             android:layout_width="wrap_content"

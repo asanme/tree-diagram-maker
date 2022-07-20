@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -57,7 +58,7 @@ class TreeDiagramActivity : AppCompatActivity() {
     private var clickedFilter = false
     private var clickedConfig = false
     private lateinit var json: String
-
+    private lateinit var viewRef: View
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGraphBinding.inflate(layoutInflater)
@@ -77,10 +78,11 @@ class TreeDiagramActivity : AppCompatActivity() {
 
         filterList = listOf(layout1Btn, layout2Btn, layout3Btn, layout4Btn)
         configList = listOf(editBtn, deleteBtn, addBtn)
+
         builder = BuchheimWalkerConfiguration.Builder()
             .setSiblingSeparation(100)
-            .setLevelSeparation(300)
-            .setSubtreeSeparation(300)
+            .setLevelSeparation(100)
+            .setSubtreeSeparation(100)
 
         newGraph = createGraph()
         recyclerView = findViewById(R.id.recycler)
@@ -477,26 +479,32 @@ class TreeDiagramActivity : AppCompatActivity() {
         }
     }
 
-    private inner class NodeViewHolder constructor(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+    private inner class NodeViewHolder constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var textView: TextView = itemView.findViewById(R.id.textView)
-
         init {
+            viewRef = itemView
             itemView.setOnClickListener {
                 if (!fab.isShown) {
                     fab.show()
                 }
 
                 currentNode = adapter.getNode(bindingAdapterPosition)
-                Snackbar.make(
-                    itemView,
-                    "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                overrideColor(viewRef, itemView)
+                viewRef = itemView
+//                Snackbar.make(
+//                    itemView,
+//                    "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(),
+//                    Snackbar.LENGTH_SHORT
+//                ).show()
             }
         }
-
     }
+
+    private fun overrideColor(oldNode:View, newNode:View){
+        oldNode.background = AppCompatResources.getDrawable(applicationContext, R.drawable.circular_box)
+        newNode.background = AppCompatResources.getDrawable(applicationContext, R.drawable.selected_box)
+    }
+
 
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
