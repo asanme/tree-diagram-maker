@@ -16,7 +16,6 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import dev.bandb.graphview.AbstractGraphAdapter
 import dev.bandb.graphview.graph.Graph
@@ -26,13 +25,11 @@ import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
 import java.util.*
 
-
 //TODO Add server based JSON parser to load the graph into the TreeGraphActivity
 //TODO Add capability to reload graph based on edited node
 //TODO Save elements into a new Node array, and then swap the old one with the new one by replacing the old data with the new one
 //TODO load json from db!
 @SuppressLint("NotifyDataSetChanged")
-
 /**
  * Main class used to generate diagrams
  * @author asanme
@@ -491,11 +488,6 @@ class TreeDiagramActivity : AppCompatActivity() {
                 currentNode = adapter.getNode(bindingAdapterPosition)
                 overrideColor(viewRef, itemView)
                 viewRef = itemView
-//                Snackbar.make(
-//                    itemView,
-//                    "Node data: " + adapter.getNodeData(bindingAdapterPosition)?.toString(),
-//                    Snackbar.LENGTH_SHORT
-//                ).show()
             }
         }
     }
