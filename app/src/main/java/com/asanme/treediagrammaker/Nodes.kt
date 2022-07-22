@@ -1,5 +1,7 @@
 package com.asanme.treediagrammaker
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
 /**
  * @param name represents the data displayed within a diagram
  * @param children represents the list of nodes within a Diagram Tree
@@ -9,7 +11,14 @@ class Nodes(
     val children: List<Nodes>
 ){
     override fun toString(): String {
-        return "\nName:\n$name\nChildren:\n$children\n"
+        if(children != null){
+            return "Name:$name\nChildren:[]"
+        }
+        return "\nName:$name\nChildren:[$children]"
+    }
+
+    fun returnChildren(): List<Nodes> {
+            return this.children
     }
 
     fun hasChildren(): Boolean {

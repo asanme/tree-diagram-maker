@@ -1,22 +1,26 @@
 package com.asanme.treediagrammaker
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.asanme.treediagrammaker.databinding.ActivityGraphBinding
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import com.google.gson.JsonElement
 import dev.bandb.graphview.AbstractGraphAdapter
 import dev.bandb.graphview.graph.Graph
 import dev.bandb.graphview.graph.Node
@@ -178,10 +182,24 @@ class TreeDiagramActivity : AppCompatActivity() {
         newStack.clear()
         val gson = Gson()
         val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+
+        //WIP Working on being able to add new JSON Objects to the JSON string
+        val mapper = ObjectMapper().registerKotlinModule()
+        val state: testingclass = mapper.readValue(json)
+
+        val allNodes = state.returnChildren()
+
+        if (allNodes != null) {
+            for(children in allNodes){
+                println(children)
+            }
+        }
+
         newStack.push(tree)
         while (newStack.isNotEmpty()) {
             replaceData(newStack.pop(), oldData, newData)
         }
+
         json = json.replace(oldData, newData, ignoreCase = false)
         //println(json)
         return newGraph
@@ -222,7 +240,6 @@ class TreeDiagramActivity : AppCompatActivity() {
      * @see buildLayoutOrientation
      * @see onFilterClicked
      * @see onConfigClicked
-     * @see generateDialog
      */
     private fun setupListeners(
         layout1Btn: Button,
@@ -257,18 +274,83 @@ class TreeDiagramActivity : AppCompatActivity() {
         }
 
         addBtn.setOnClickListener {
-            generateDialog("Nova etiqueta", "Introdueix el nom de l'etiqueta", "add")
+            val view = View.inflate(this@TreeDiagramActivity, R.layout.custom_dialog_add, null)
+            val build = androidx.appcompat.app.AlertDialog.Builder(this@TreeDiagramActivity)
+            build.setView(view)
+
+            val dialog = build.create()
+            val addNodeEditTextInput =
+                view.findViewById<TextInputLayout>(R.id.addNodeTextInput)
+            val addNodeEditText = view.findViewById<TextInputEditText>(R.id.addNodeEditText)
+
+            dialog.show()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            dialog.setCancelable(false)
+
+            view.findViewById<Button>(R.id.cancelEditBtn).setOnClickListener {
+                dialog.dismiss()
+            }
+
+            view.findViewById<Button>(R.id.editNodeBtn).setOnClickListener {
+                if (addNodeEditText.text.toString() == "") {
+                    addNodeEditTextInput.error = "El nom no pot estar en blanc"
+                } else {
+                    createNode(addNodeEditText.text.toString(), graph)
+                    dialog.dismiss()
+                }
+            }
         }
 
         editBtn.setOnClickListener {
             if (currentNode != null) {
-                generateDialog("Editar etiqueta", "Introdueix el nou nom", "edit")
+                val view = View.inflate(this@TreeDiagramActivity, R.layout.custom_dialog_edit, null)
+                val build = androidx.appcompat.app.AlertDialog.Builder(this@TreeDiagramActivity)
+                build.setView(view)
+
+                val dialog = build.create()
+                val editTextError = view.findViewById<TextInputLayout>(R.id.editNodeTextInput)
+                val editText = view.findViewById<TextInputEditText>(R.id.editNodeEditText)
+
+                dialog.show()
+                dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+                dialog.setCancelable(false)
+
+                view.findViewById<Button>(R.id.cancelEditBtn).setOnClickListener {
+                    dialog.dismiss()
+                }
+
+                view.findViewById<Button>(R.id.editNodeBtn).setOnClickListener {
+                    if (editText.text.toString() == "") {
+                        editTextError.error = "El nom no pot estar en blanc"
+                    } else {
+                        editNode(editText.text.toString())
+                        dialog.dismiss()
+                    }
+                }
             }
         }
 
         deleteBtn.setOnClickListener {
             if (currentNode != null) {
-                generateDialog("Alerta", "Vols eliminar ${currentNode!!.data}?", "delete")
+                val view =
+                    View.inflate(this@TreeDiagramActivity, R.layout.custom_dialog_delete, null)
+                val build = androidx.appcompat.app.AlertDialog.Builder(this@TreeDiagramActivity)
+                build.setView(view)
+
+                val dialog = build.create()
+
+                dialog.show()
+                dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+                dialog.setCancelable(false)
+
+                view.findViewById<Button>(R.id.cancelDeleteBtn).setOnClickListener {
+                    dialog.dismiss()
+                }
+
+                view.findViewById<Button>(R.id.deleteNodeBtn).setOnClickListener{
+                    deleteNode()
+                    dialog.dismiss()
+                }
             }
         }
     }
@@ -381,80 +463,6 @@ class TreeDiagramActivity : AppCompatActivity() {
     }
 
     /**
-     * Method used to simplify the process of creating a dialog
-     * @param title represents the title that will be displayed within the dialog when the user clicks a configuration button
-     * @param message represents the message that will be displayed within the dialog when the user clicks a configuration button
-     * @param type represents the type of dialog that will be displayed when the user clicks a configuration button
-     */
-    private fun generateDialog(title: String, message: String, type: String) {
-        val newDialog = AlertDialog.Builder(this)
-        when (type) {
-            "add" -> {
-                showDialog(newDialog, title, message, type, true)
-            }
-
-            "edit" -> {
-                showDialog(newDialog, title, message, type, true)
-            }
-
-            "delete" -> {
-                showDialog(newDialog, title, message, type, false)
-            }
-        }
-    }
-
-    /**
-     * Method used to display a new dialog when clicking on a configuration button
-     * @param newDialog previously created dialog
-     * @param title title of the dialog
-     * @param message message of the dialog
-     * @param type type of dialog
-     * @param isEditable weather or not there should be an EditText within the dialog
-     */
-    private fun showDialog(
-        newDialog: AlertDialog.Builder,
-        title: String,
-        message: String,
-        type: String,
-        isEditable: Boolean
-    ) {
-        newDialog.setTitle(title)
-        newDialog.setMessage(message)
-
-        if (isEditable) {
-            val name = EditText(this)
-            var text: String
-            newDialog.setView(name)
-            newDialog.setPositiveButton(android.R.string.ok) { _, _ ->
-                if (name.text.toString() == "") {
-                    Toast.makeText(this, "El nom no pot estar buit", Toast.LENGTH_SHORT).show()
-                } else {
-                    text = name.text.toString()
-                    when (type) {
-                        "add" -> {
-                            createNode(text, graph)
-                        }
-
-                        "edit" -> {
-                            editNode(text)
-                        }
-                    }
-                }
-            }
-        } else {
-            newDialog.setPositiveButton(android.R.string.ok) { _, _ ->
-                deleteNode()
-            }
-        }
-
-        newDialog.setNegativeButton("CANCELAR") { _, _ ->
-
-        }
-
-        newDialog.show()
-    }
-
-    /**
      * Method used to load the default graph or even reload with a new one
      * @param graph Graph that represents the data to be displayed
      * @see Graph
@@ -476,8 +484,10 @@ class TreeDiagramActivity : AppCompatActivity() {
         }
     }
 
-    private inner class NodeViewHolder constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class NodeViewHolder constructor(itemView: View) :
+        RecyclerView.ViewHolder(itemView) {
         var textView: TextView = itemView.findViewById(R.id.textView)
+
         init {
             viewRef = itemView
             itemView.setOnClickListener {
@@ -492,9 +502,16 @@ class TreeDiagramActivity : AppCompatActivity() {
         }
     }
 
-    private fun overrideColor(oldNode:View, newNode:View){
-        oldNode.background = AppCompatResources.getDrawable(applicationContext, R.drawable.circular_box)
-        newNode.background = AppCompatResources.getDrawable(applicationContext, R.drawable.selected_box)
+    /**
+     * Method used to override the selected node color and return the old one to the default color
+     * @param newNode represents the newly selected node
+     * @param oldNode reference to the previous selected node
+     */
+    private fun overrideColor(oldNode: View, newNode: View) {
+        oldNode.background =
+            AppCompatResources.getDrawable(applicationContext, R.drawable.circular_box)
+        newNode.background =
+            AppCompatResources.getDrawable(applicationContext, R.drawable.selected_box)
     }
 
 

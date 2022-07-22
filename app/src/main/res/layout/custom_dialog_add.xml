@@ -3,17 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="270dp"
+    android:layout_height="wrap_content"
     android:background="@drawable/custom_dialog_box">
 
     <TextView
-        android:id="@+id/editNodeStrign"
+        android:id="@+id/addNodeString"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="10dp"
         android:fontFamily="@font/inter"
-        android:padding="10dp"
-        android:text="Editar Etiqueta"
+        android:text="@string/add_node"
         android:textColor="#093545"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -22,37 +21,22 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/editNodeBtn"
-        android:layout_width="170dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="5dp"
-        android:layout_marginBottom="5dp"
-        android:background="@drawable/bottom_right_btn"
-        android:fontFamily="@font/inter"
-        android:text="Editar Etiqueta"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/outlinedTextField" />
-
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/outlinedTextField"
+        android:id="@+id/addNodeTextInput"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_marginTop="10dp"
-        android:hint="Nom"
+        android:layout_marginHorizontal="15dp"
+        android:layout_marginBottom="20dp"
+        android:hint="@string/name"
+        app:errorEnabled="true"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editNodeStrign">
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/addNodeEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -62,18 +46,37 @@
         android:id="@+id/cancelEditBtn"
         android:layout_width="170dp"
         android:layout_height="60dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="10dp"
         android:background="@drawable/bottom_left_btn"
         android:fontFamily="@font/inter"
-        android:text="Cancelar"
+        android:text="@string/cancel"
         android:textAllCaps="false"
         android:textColor="#093545"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/outlinedTextField" />
+        app:layout_constraintTop_toBottomOf="@+id/addNodeTextInput" />
+
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/editNodeBtn"
+        android:layout_width="170dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/custom_add_btn"
+        android:fontFamily="@font/inter"
+        android:text="@string/add_node"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/addNodeTextInput" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">TreeDiagramMaker</string>
     <string name="bombers_catalunya">Bombers Catalunya</string>
+    <string name="delete_node">Eliminar Etiqueta</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete_warning">ATENCIÓ:\n Aquesta acció no es pot desfer</string>
+    <string name="delete_node_title">Eliminar Etiqueta</string>
+    <string name="add_node">Afegir Etiqueta</string>
+    <string name="name">Nom</string>
+    <string name="edit_node">Editar Etiqueta</string>
 </resources>

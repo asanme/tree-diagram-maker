@@ -10,10 +10,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TreeDiagramMaker">
         <activity
-            android:name=".TreeDiagramActivity"
+            android:name=".TestingActivity"
             android:exported="false" />
         <activity
-            android:name=".TestingActivity"
+            android:name=".TreeDiagramActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
