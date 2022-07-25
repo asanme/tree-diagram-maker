@@ -27,6 +27,7 @@ import dev.bandb.graphview.graph.Node
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration
+import kotlinx.coroutines.android.awaitFrame
 import java.util.*
 
 //TODO Add server based JSON parser to load the graph into the TreeGraphActivity
@@ -52,6 +53,7 @@ class TreeDiagramActivity : AppCompatActivity() {
     private lateinit var newGraph: Graph
     private val pila: Deque<Nodes> = LinkedList()
     private val newStack: Deque<Nodes> = LinkedList()
+    private var mNodesList = mutableListOf<Nodes>()
     private lateinit var filterList: List<Button>
     private lateinit var configList: List<FloatingActionButton>
     private lateinit var binding: ActivityGraphBinding
@@ -180,28 +182,53 @@ class TreeDiagramActivity : AppCompatActivity() {
     private fun replaceJson(oldData: String, newData: String): Graph {
         newGraph = Graph()
         newStack.clear()
+        mNodesList.clear()
+
         val gson = Gson()
-        val tree: Nodes = gson.fromJson(json, Nodes::class.java)
+        var mappedNodes: Nodes = gson.fromJson(json, Nodes::class.java)
 
-        //WIP Working on being able to add new JSON Objects to the JSON string
+//        val nodePosition = mappedNodes.returnNodePosition("B")
+//        println("workin? $nodePosition")
+//
+//        //WIP Working on being able to add new JSON Objects to the JSON string
         val mapper = ObjectMapper().registerKotlinModule()
-        val state: testingclass = mapper.readValue(json)
 
-        val allNodes = state.returnChildren()
+//        val allNodes = state.returnChildren()
 
-        if (allNodes != null) {
-            for(children in allNodes){
-                println(children)
-            }
-        }
+        //println("first node name::: ${allNodes?.get(2)!!.name}")
 
-        newStack.push(tree)
+//        if (allNodes != null) {
+//            for(children in allNodes){
+//                if(children.name == oldData){
+//                    println("adding node (?)")
+//                }
+//
+//                println(children.name)
+//            }
+//        }
+
+        //mNodesList.add(Nodes(graph.nodes[0].data.toString(), mNodesList))
+        newStack.push(mappedNodes)
         while (newStack.isNotEmpty()) {
             replaceData(newStack.pop(), oldData, newData)
         }
 
+        for(element in mNodesList){
+            if(element.name == currentNode!!.data.toString()){
+                println("Adding new node to ${mNodesList.indexOf(element)}")
+                mNodesList.add(mNodesList.indexOf(element), Nodes(newData, mNodesList))
+            }
+        }
+
+        for(item in mNodesList){
+            println(item.children)
+        }
+
+        //TODO Fix exception
+//        val newJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mNodesList)
+//        println("json::: \n $newJson")
+
         json = json.replace(oldData, newData, ignoreCase = false)
-        //println(json)
         return newGraph
     }
 
@@ -218,15 +245,15 @@ class TreeDiagramActivity : AppCompatActivity() {
                 //println(node.children)
                 if (node.name == oldData) {
                     //println("REPLACING ${node.name} FOR ${newData}")
+                    mNodesList.add(node)
                     newGraph.addEdge(Node(nodes.name), Node(newData))
                     newStack.push(Nodes(newData, node.children))
                     //jsonObject.put(node.name, nodes)
                 } else {
+                    mNodesList.add(node)
                     newGraph.addEdge(Node(nodes.name), Node(node.name))
                     newStack.push(node)
                 }
-            } else {
-                //println("nochildren")
             }
         }
     }
